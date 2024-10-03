@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ include "tlstest.fullname" . }}-nginx-http-test
+  labels:
+    {{- include "tlstest.labels" . | indent 4 }}
+  annotations:
+    "helm.sh/hook": test
+    #"helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded,hook-failed
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  containers:
+    # Nginx should listen on TCP 80
+    - name: nc-check-port
+      image: curlimages/curl
+      command: ['sh', '-c']
+      args: ['echo | nc -v {{ include "tlstest.fullname" . }} 80 >/proc/1/fd/1 2>/proc/1/fd/2']
+    # Expecting nginx default site with HTTP 200 OK
+    - name: curl-check-http
+      image: curlimages/curl
+      command: ['sh', '-c']
+      args: ['curl -sS -H "Host: {{ .Values.tls.certCN }}" http://{{ include "tlstest.fullname" . }}/ >/proc/1/fd/1 2>/proc/1/fd/2']
+  restartPolicy: Never

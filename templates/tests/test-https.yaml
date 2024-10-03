@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ include "tlstest.fullname" . }}-nginx-https-test
+  labels:
+    {{- include "tlstest.labels" . | indent 4 }}
+  annotations:
+    "helm.sh/hook": test
+    #"helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded,hook-failed
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  containers:
+    # Nginx should listen on TCP 443
+    - name: nc-check-port
+      image: curlimages/curl
+      command: ['/bin/sh', '-c']
+      args: ['echo | nc -v {{ include "tlstest.fullname" . }} 443 >/proc/1/fd/1 2>/proc/1/fd/2']
+    # Expecting HTTP 200 OK
+    - name: curl-check-https
+      image: curlimages/curl
+      command: ['/bin/sh', '-c']
+      args: ['curl -sS --connect-to {{ .Values.tls.certCN }}:443:{{ include "tlstest.fullname" . }}:443 https://{{ .Values.tls.certCN }}/ --cacert /usr/local/share/ca-certificates/tls.cacert.crt >/proc/1/fd/1 2>/proc/1/fd/2']
+      volumeMounts:
+      - name: ca-certs-volume
+        mountPath: /usr/local/share/ca-certificates
+        readOnly: true
+    # scanning ciphers etc.
+    - name: sslscan-check-https
+      image: cmoore1776/sslscan
+      command: ['/bin/sh', '-c']
+      # uses 'sslscan' user on alpine
+      # https://github.com/cmoore1776/sslscan/blob/master/Dockerfile  
+      args: ['sslscan --no-colour --show-certificate --sni-name={{ .Values.tls.certCN }} {{ include "tlstest.fullname" . }}:443 >/proc/1/fd/1 2>/proc/1/fd/2']
+      # TODO container does not pickup the env var, so cert validation does not work
+      env:
+        - name: SSL_CERT_FILE
+          value: "/usr/local/share/ca-certificates/tls.cacert.crt"
+      volumeMounts:
+      - name: ca-certs-volume
+        mountPath: /usr/local/share/ca-certificates
+        readOnly: true
+  volumes:
+    - name: ca-certs-volume
+      secret:
+        secretName: {{ include "tlstest.fullname" . }}-cacerts
+  restartPolicy: Never

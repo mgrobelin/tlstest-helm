@@ -1,0 +1,35 @@
+### Values files ###
+*-values.yaml
+
+### Editors & IDEs ###
+
+## IntelliJ
+*.iml
+*.iws
+.idea/
+# IntelliJ creates this directory in WAR-modules with WAR-dependencies
+overlays/
+
+## Eclipse
+.metadata
+.settings/
+.loadpath
+.project
+.classpath
+.externalToolBuilders/
+
+## Netbeans
+nbproject/
+
+## Sublime
+*.sublime-workspace
+
+## Visual Studio Code
+.vscode/
+
+### Misc ###
+## Files, that should never be ignored
+!**/.gitkeep
+!**/.gitignore
+!**/.gitattributes
+!**/.editorconfig

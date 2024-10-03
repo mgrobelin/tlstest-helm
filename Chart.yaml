@@ -1,0 +1,8 @@
+apiVersion: v2
+name: tlstest
+description: A project that spawns a TLS endpoint with given certificates
+type: application
+version: 1.0.1
+appVersion: "1.0.0"
+
+dependencies: []
